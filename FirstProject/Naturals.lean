@@ -13,6 +13,8 @@ axiom zero_ne_succ (a:natnum): zero ≠ succ a
 
 def one:natnum := succ zero
 
+def two:natnum := succ one
+
 theorem one_eq_succ_zero : one = succ zero := by
   rfl
 
@@ -59,6 +61,12 @@ theorem add_assoc : add a (add b c) = add (add a b) c := by
     |succ d hd =>
       repeat rewrite [succ_add]
       rw [hd]
+
+theorem pred_exists (a : natnum) (h : a ≠ zero) : ∃ (b : natnum), succ b = a := by
+  cases a
+  contradiction
+  rename_i n
+  exists n
 
 infixl:65 " + " => add --overloading + with add
 
@@ -171,3 +179,5 @@ theorem one_div (a : natnum) : div one a := by
 theorem div_self (a : natnum) : div a a := by
   exists one
   rw [mul_one]
+
+end natnum
