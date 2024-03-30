@@ -14,6 +14,7 @@
 extern "C" {
 #endif
 static lean_object* l_natnum_term___x2b_____closed__7;
+static lean_object* l_natnum_two___closed__1;
 static lean_object* l_natnum___aux__FirstProject__Naturals______macroRules__natnum__term___x2a____1___closed__2;
 static lean_object* l_natnum_term___x2a_____closed__3;
 static lean_object* l_natnum___aux__FirstProject__Naturals______macroRules__natnum__term___x2a____1___closed__8;
@@ -63,6 +64,7 @@ lean_object* l_Lean_Syntax_node2(lean_object*, lean_object*, lean_object*, lean_
 LEAN_EXPORT lean_object* l_natnum_term___x2b__;
 lean_object* l_Lean_Syntax_getArg(lean_object*, lean_object*);
 uint8_t l_Lean_Syntax_matchesNull(lean_object*, lean_object*);
+LEAN_EXPORT lean_object* l_natnum_two;
 static lean_object* l_natnum_term___u2264_____closed__3;
 static lean_object* l_natnum_term___x2b_____closed__3;
 static lean_object* l_natnum_term___u2264_____closed__4;
@@ -115,6 +117,24 @@ _start:
 {
 lean_object* x_1; 
 x_1 = l_natnum_one___closed__1;
+return x_1;
+}
+}
+static lean_object* _init_l_natnum_two___closed__1() {
+_start:
+{
+lean_object* x_1; lean_object* x_2; 
+x_1 = l_natnum_one;
+x_2 = lean_alloc_ctor(1, 1, 0);
+lean_ctor_set(x_2, 0, x_1);
+return x_2;
+}
+}
+static lean_object* _init_l_natnum_two() {
+_start:
+{
+lean_object* x_1; 
+x_1 = l_natnum_two___closed__1;
 return x_1;
 }
 }
@@ -1253,6 +1273,10 @@ l_natnum_one___closed__1 = _init_l_natnum_one___closed__1();
 lean_mark_persistent(l_natnum_one___closed__1);
 l_natnum_one = _init_l_natnum_one();
 lean_mark_persistent(l_natnum_one);
+l_natnum_two___closed__1 = _init_l_natnum_two___closed__1();
+lean_mark_persistent(l_natnum_two___closed__1);
+l_natnum_two = _init_l_natnum_two();
+lean_mark_persistent(l_natnum_two);
 l_natnum_term___x2b_____closed__1 = _init_l_natnum_term___x2b_____closed__1();
 lean_mark_persistent(l_natnum_term___x2b_____closed__1);
 l_natnum_term___x2b_____closed__2 = _init_l_natnum_term___x2b_____closed__2();
