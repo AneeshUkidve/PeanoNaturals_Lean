@@ -1,8 +1,12 @@
-theorem test (p q : Prop) (hp : p) (hq : q) : p ∧ q ∧ p := by
-  apply And.intro
-  exact hp
-  apply And.intro
-  exact hq
-  exact hp
+inductive NatNum where
+  |zero : NatNum
+  |succ (a : NatNum) : NatNum
+  deriving Repr
 
-#print test
+namespace NatNum
+
+theorem zero_ne_succ (a : NatNum) : zero ≠ succ a := by
+  simp
+theorem succ_inj (h : succ a = succ b) : a = b := by
+  simp at h
+  exact h
