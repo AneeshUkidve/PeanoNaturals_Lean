@@ -57,6 +57,7 @@ theorem pred_inj (a b : Integer) (h : pred a = pred b) : a = b := by
     _ = succ (pred b) := by rw [h]
     _ = b             := by rw [succ_pred]
 
+theorem succ_pos_eq_succ (a : Natural) : nat_to_pos (Natural.succ a) = succ (nat_to_pos a) := by rfl
 
 def add : Integer → Integer → Integer
   |nat_to_pos a, nat_to_pos b => nat_to_pos (a + b)
@@ -317,6 +318,21 @@ theorem add_inv (a : Integer) : a + inverse a = zero := by
 theorem inv_add (a : Integer) : inverse a + a = zero := by
   rw [add_comm, add_inv]
 
+theorem right_add (a b c : Integer) (h : a = b) : a + c = b + c := by
+  rw [h]
+
+theorem left_add (a b c : Integer) (h : a = b) : c + a = c + b := by
+  rw [h]
+
+theorem right_cancel (a b c : Integer) (h : a + c = b + c) : a = b := by
+  have h1 : a + c + (inverse c) = b + c + (inverse c) := by rw [h]
+  simp [add_assoc, add_inv, add_zero] at h1
+  exact h1
+
+theorem left_cancel (a b c : Integer) (h : c + a = c + b) : a = b := by
+  simp [add_comm] at h
+  exact (right_cancel a b c h)
+
 def mul : Integer → Integer → Integer
   |nat_to_pos a, nat_to_pos b                 => nat_to_pos (a * b)
   |nat_to_neg _, nat_to_pos Natural.zero      => zero
@@ -327,7 +343,7 @@ def mul : Integer → Integer → Integer
 
   |nat_to_neg a, nat_to_neg b                 =>nat_to_pos (Natural.succ a * Natural.succ b)
 
-infixl:65 " * " => mul
+infixl:70 " * " => mul
 
 theorem mul_zero (a : Integer) : a * zero = zero := by cases a; rfl; rfl
 
@@ -374,4 +390,257 @@ def neg_one := inverse one
 
 theorem neg_one_eq_neg_zero : neg_one = nat_to_neg Natural.zero := by rfl
 
-theorem inv_eq_mul_neg_one (a : Integer) : inverse a = a * neg_one := sorry
+theorem inv_eq_mul_neg_one (a : Integer) : inverse a = a * neg_one := by
+  cases a
+  rfl
+  simp [inverse]
+  rw [neg_one, one, zero]
+  simp [succ, inverse, mul]
+  rw [←Natural.one, Natural.mul_one]
+
+theorem inv_inv (a : Integer) : inverse (inverse a) = a := by
+  have h : inverse (inverse a) + inverse a = a + inverse a := by simp [add_inv, inv_add]
+  exact right_cancel (inverse (inverse a)) a (inverse a) h
+
+prefix:75  "-"   => inverse
+
+theorem inv_lin (a b : Integer) : -a + -b = -(a + b) := by
+  have h : -a + -b + (a + b) = -(a + b) + (a + b) := by
+    simp [inv_add]
+    rw [add_comm (-a), add_assoc, ←add_assoc (-a), inv_add, zero_add, inv_add]
+  exact right_cancel (-a + -b) (-(a + b)) (a + b) h
+
+theorem mul_succ (a b : Integer) : a * succ b = (a * b) + a := by
+  cases a
+  rename_i apos
+  induction apos with
+  |zero =>
+    rw [←zero]
+    simp [zero_mul, add_zero]
+  |succ d hd =>
+    cases b
+    rename_i bpos
+    simp [succ, mul, Natural.succ_mul, Natural.mul_succ, hd, add]
+
+    rename_i bneg
+    cases bneg
+
+    simp [succ, mul_zero]
+    rw [←neg_one_eq_neg_zero, ←inv_eq_mul_neg_one, inv_add]
+
+    rename_i bN
+    simp [mul, succ]
+    apply Eq.symm
+    calc
+      _ = nat_to_pos (Natural.succ d) * nat_to_neg bN + nat_to_neg d + succ (nat_to_pos d) := by simp [succ]
+      _ = nat_to_pos (Natural.succ d) * nat_to_neg bN + nat_to_neg d + -(nat_to_neg d) := by simp [inverse]
+      _ = nat_to_pos (Natural.succ d) * nat_to_neg bN := by rw [add_assoc, add_inv (nat_to_neg d), add_zero]
+  rename_i aneg
+  induction aneg with
+  |zero =>
+    cases b
+    rename_i b
+    simp [succ, mul]
+    rename_i b
+    cases b
+    simp [succ, mul_zero]
+    rw [←neg_one_eq_neg_zero, ←inv_eq_mul_neg_one, inv_add]
+    rename_i bN
+    simp [succ, mul]
+    rw [←Natural.one, Natural.one_mul, Natural.one_mul, ←pred_eq_add_neg_one]
+    simp [pred]
+  |succ d hd =>
+    cases b
+    simp [succ, mul]
+    rename_i bN
+    cases bN
+    simp [succ, mul_zero]
+    rw [←neg_one_eq_neg_zero, ←inv_eq_mul_neg_one, inv_add]
+    rename_i bN
+    simp [succ, mul, Natural.mul_succ, Natural.succ_mul]
+    apply Eq.symm
+    calc
+      _ = nat_to_pos (d * bN + bN + bN + Natural.succ (Natural.succ d)) + nat_to_pos (Natural.succ (Natural.succ d)) +
+    nat_to_neg (Natural.succ d) := by simp [add]
+      _ = nat_to_pos (d * bN + bN + bN + Natural.succ (Natural.succ d)) + succ (nat_to_pos (Natural.succ d)) +
+    nat_to_neg (Natural.succ d) := by simp [succ]
+      _ = nat_to_pos (d * bN + bN + bN + Natural.succ (Natural.succ d)) + -(nat_to_neg (Natural.succ d)) +
+    nat_to_neg (Natural.succ d) := by simp [inverse]
+      _ = nat_to_pos (d * bN + bN + bN + Natural.succ (Natural.succ d)) := by simp [add_assoc, inv_add, add_zero]
+
+theorem inv_mul (a b : Integer) : -a * b = -(a * b) := by
+  cases b
+  rename_i b
+  induction b with
+  |zero =>
+    rw [←zero, mul_zero, mul_zero, inv_zero]
+  |succ d hd =>
+    cases a
+    rename_i a
+    simp [inverse, mul]
+    cases a
+    simp [Natural.zero_mul, succ, zero_mul]
+    rename_i e
+    simp [Natural.mul_succ, Natural.add_succ, succ]
+    calc
+      _ = nat_to_neg e * succ (nat_to_pos d) := by simp [succ]
+      _ = nat_to_neg e * nat_to_pos d + nat_to_neg e := by rw [mul_succ]
+      _ = succ (nat_to_neg (Natural.succ e)) * nat_to_pos d + nat_to_neg e := by simp [succ]
+      _ = -nat_to_pos (Natural.succ e) * nat_to_pos d + nat_to_neg e := by simp [inverse]
+      _ = -(nat_to_pos (Natural.succ e) * nat_to_pos d) + nat_to_neg e := by rw [hd]
+      _ = -(nat_to_pos (Natural.succ e * d)) + nat_to_neg e := by simp [mul]
+      _ = succ (nat_to_neg (Natural.succ e * d)) + nat_to_neg e := by simp [inverse]
+      _ = succ (nat_to_neg (Natural.succ e * d) + nat_to_neg e) := by rw [succ_add]
+      _ = succ (pred (nat_to_neg (Natural.succ e * d + e))) := by simp [add]
+      _ = nat_to_neg (Natural.succ e * d + e) := by rw [succ_pred]
+
+    rename_i a
+    simp [mul]
+    calc
+      _ = -nat_to_neg a * succ (nat_to_pos d) := by simp [succ]
+      _ = -nat_to_neg a * nat_to_pos d + -nat_to_neg a := by rw [mul_succ]
+      _ = -(nat_to_neg a * nat_to_pos d) + -nat_to_neg a := by rw [hd]
+      _ = -(nat_to_neg a * nat_to_pos d + nat_to_neg a) := by rw [inv_lin]
+
+  rename_i b
+  induction b with
+  |zero =>
+    rw [←neg_one_eq_neg_zero, ←inv_eq_mul_neg_one, ←inv_eq_mul_neg_one]
+  |succ d hd =>
+    cases a
+    rename_i a
+    apply Eq.symm
+    calc
+      _ = -(nat_to_pos a * nat_to_neg d + succ (nat_to_neg a)) := by simp [mul]
+      _ = -(nat_to_pos a * nat_to_neg d) + -succ (nat_to_neg a) := by rw [inv_lin]
+      _ = -nat_to_pos a * nat_to_neg d + -(-nat_to_pos a) := by rw [Eq.symm hd, inverse]
+      _ = -nat_to_pos a * nat_to_neg d + nat_to_pos a := by rw [inv_inv]
+    simp [inverse]
+    cases a
+    simp [succ, zero_mul, zero_add]
+    rfl
+    rename_i a
+    simp [succ, mul, add, Natural.mul_succ]
+
+    rename_i a
+    calc
+      _ = succ (nat_to_pos a) * nat_to_neg (Natural.succ d) := by simp [inverse]
+      _ = nat_to_pos (Natural.succ a) * nat_to_neg (Natural.succ d) := by simp [succ]
+      _ = nat_to_pos (Natural.succ a) * nat_to_neg d + succ (nat_to_neg (Natural.succ a)) := by simp [mul]
+      _ = succ (nat_to_pos a) * nat_to_neg d + succ (nat_to_neg (Natural.succ a)) := by simp [succ]
+      _ = -nat_to_neg a * nat_to_neg d + -nat_to_pos (Natural.succ a) := by simp [inverse]
+      _ = -(nat_to_neg a * nat_to_neg d) + -nat_to_pos (Natural.succ a) := by rw [hd]
+      _ = -(nat_to_pos (Natural.succ a * Natural.succ d) + nat_to_pos (Natural.succ a)) := by simp [mul, inv_lin]
+      _ = -(nat_to_pos (Natural.succ a * Natural.succ d + Natural.succ a)) := by simp [add]
+      _ = -(nat_to_pos (Natural.succ a * Natural.succ (Natural.succ d))) := by simp [Natural.mul_succ]
+      _ = -(nat_to_neg a * nat_to_neg (Natural.succ d)) := by simp [mul]
+
+theorem mul_inv (a b : Integer) : a * -b = -(a * b) := by
+  cases b
+  cases a
+  rename_i b a
+  induction b with
+  |zero =>
+    rfl
+  |succ d hd =>
+    simp [mul, inverse, mul_succ, Natural.mul_succ]
+    calc
+      _ = nat_to_pos a * nat_to_neg d + -(nat_to_pos a) + nat_to_pos a := by simp [inverse]
+      _ = nat_to_pos a * nat_to_neg d := by rw [add_assoc, inv_add (nat_to_pos a), add_zero]
+    apply Eq.symm
+    calc
+      _ = -nat_to_pos (a * d + a) := by simp [inverse]
+      _ = -(nat_to_pos (a * d) + nat_to_pos a) := by simp [add]
+      _ = -(nat_to_pos a * nat_to_pos d + nat_to_pos a) := by simp [mul]
+      _ = nat_to_pos a * -nat_to_pos d + -nat_to_pos a := by rw [←inv_lin, hd]
+      _ = nat_to_pos a * succ (nat_to_neg d) + -nat_to_pos a := by simp [inverse]
+      _ = nat_to_pos a * nat_to_neg d + nat_to_pos a + -nat_to_pos a := by rw [mul_succ]
+      _ = nat_to_pos a * nat_to_neg d := by rw [add_assoc, add_inv (nat_to_pos a), add_zero]
+
+  rename_i b a
+  rw [←inv_mul]; simp [inverse, mul, mul_succ]
+  simp [succ, mul, Natural.mul_succ]
+  calc
+    _ = nat_to_pos (Natural.succ a * b) + nat_to_pos (Natural.succ a) + nat_to_neg a := by simp [add]
+    _ = nat_to_pos (Natural.succ a * b) + succ (nat_to_pos a) + nat_to_neg a := by simp [succ]
+    _ = nat_to_pos (Natural.succ a * b) + -nat_to_neg a + nat_to_neg a := by simp [inverse]
+    _ = nat_to_pos (Natural.succ a * b) := by rw [add_assoc, inv_add, add_zero]
+
+  cases a
+  rename_i b a
+  calc
+    _ = nat_to_pos a * succ (nat_to_pos b) := by simp [inverse]
+    _ = nat_to_pos (a * b + a) := by simp [mul_succ, mul, add]
+    _ = nat_to_pos (a * Natural.succ b) := by simp [Natural.mul_succ]
+  cases a
+  rw [←zero]; simp [Natural.zero_mul, Natural.add_zero, zero_mul, inv_zero]
+  rw [zero]
+  rename_i d
+  calc
+    _ = nat_to_neg d * nat_to_neg b := by simp [mul]
+    _ = -(-nat_to_neg d) * nat_to_neg b := by simp [inv_inv]
+    _ = -(succ (nat_to_pos d)) * nat_to_neg b := by simp [inverse]
+    _ = -(nat_to_pos (Natural.succ d) * nat_to_neg b) := by simp [inv_mul, succ]
+
+  rename_i b a
+  calc
+    _ = nat_to_neg a * succ (nat_to_pos b) := by simp [inverse]
+    _ = nat_to_neg a * nat_to_pos b + nat_to_neg a := by simp [mul_succ]
+  apply Eq.symm
+  calc
+    _ = -(nat_to_pos (Natural.succ a * Natural.succ b)) := by simp [mul]
+    _ = succ (nat_to_neg (a * Natural.succ b + Natural.succ b)) := by simp [inverse, Natural.succ_mul]
+    _ = succ (nat_to_neg (a * b + a + Natural.succ b)) := by simp [Natural.mul_succ]
+    _ = succ (nat_to_neg (Natural.succ (a * b + a + b))) := by simp [Natural.add_succ]
+    _ = nat_to_neg (a * b + a + b) := by simp [succ]
+    _ = nat_to_neg (a * b + b + a) := by rw [←Natural.add_assoc, Natural.add_comm a, Natural.add_assoc]
+    _ = succ (pred (nat_to_neg (a * b + b + a))) := by rw [succ_pred]
+    _ = succ (nat_to_neg (a * b + b) + nat_to_neg a) := by simp [add]
+    _ = succ (nat_to_neg (Natural.succ a * b)) + nat_to_neg a := by simp [succ_add, Natural.succ_mul]
+    _ = -nat_to_pos (Natural.succ a * b) + nat_to_neg a := by simp [inverse]
+    _ = -(nat_to_pos (Natural.succ a) * nat_to_pos b) + nat_to_neg a := by simp [mul]
+    _ = -nat_to_pos (Natural.succ a) * nat_to_pos b + nat_to_neg  a := by simp [inv_mul]
+    _ = succ (nat_to_neg (Natural.succ a)) * nat_to_pos b + nat_to_neg a := by simp [inverse]
+    _ = nat_to_neg a * nat_to_pos b + nat_to_neg a := by simp [succ]
+
+
+
+theorem inv_inj (a b : Integer) (h : -a = -b) : a = b := by
+  rw [←inv_inv a, h, inv_inv]
+
+theorem add_mul (a b c : Integer) : (b + c) * a = (b * a) + (c * a) := by
+  cases a
+  rename_i a
+  induction a with
+  |zero =>
+    rw [←zero]
+    simp [mul_zero, add_zero]
+  |succ d hd =>
+    simp [succ_pos_eq_succ, mul_succ]
+    rw [hd]
+    rw [add_assoc, add_comm (c * nat_to_pos d), add_assoc, add_comm c, add_assoc]
+
+  rename_i a
+  induction a with
+  |zero =>
+    simp [←neg_one_eq_neg_zero, ←inv_eq_mul_neg_one, inv_lin]
+  |succ d hd =>
+    calc
+      _ = -(-((b + c) * nat_to_neg (Natural.succ d))) := by rw [inv_inv]
+      _ = -((b + c) * -nat_to_neg (Natural.succ d)) := by rw [mul_inv]
+      _ = -((b + c) * succ (nat_to_pos (Natural.succ d))) := by simp [inverse]
+      _ = -((b + c) * nat_to_pos (Natural.succ d) + (b + c)) := by rw [mul_succ]
+      _ = -((b + c) * nat_to_pos (Natural.succ d)) + -(b + c) := by rw [inv_lin]
+      _ = (b + c) * -nat_to_pos (Natural.succ d) + -(b + c) := by rw [←mul_inv]
+      _ = (b + c) * succ (nat_to_neg (Natural.succ d)) + -(b + c) := by simp [inverse]
+      _ = (b + c) * nat_to_neg d + -(b + c) := by simp [succ]
+      _ = b * nat_to_neg d + c * nat_to_neg d + (-b + -c) := by rw [hd, ←inv_lin]
+      _ = (b * nat_to_neg d + -b) + (c * nat_to_neg d + -c) := by rw [add_assoc, ←add_assoc (c * nat_to_neg d), add_comm (c * nat_to_neg d), add_assoc (-b), ←add_assoc (b * nat_to_neg d)]
+      _ = (b * succ (nat_to_neg (Natural.succ d)) + -b) + (c * succ (nat_to_neg (Natural.succ d)) + -c) := by simp [succ]
+      _ = (b * -nat_to_pos (Natural.succ d) + -b) + (c * -nat_to_pos (Natural.succ d) + -c) := by simp [inverse]
+      _ = (-(b * nat_to_pos (Natural.succ d)) + -b) + (-(c * nat_to_pos (Natural.succ d)) + -c) := by simp [mul_inv]
+      _ = (-(b * nat_to_pos (Natural.succ d) + b)) + (-(c * nat_to_pos (Natural.succ d) + c)) := by simp [inv_lin]
+      _ = (-(b * succ (nat_to_pos (Natural.succ d)))) + (-(c * succ (nat_to_pos (Natural.succ d)))) := by simp [mul_succ]
+      _ = (-(b * -nat_to_neg (Natural.succ d))) + (-(c * -nat_to_neg (Natural.succ d))) := by simp [inverse]
+      _ = (-(-(b * nat_to_neg (Natural.succ d)))) + (-(-(c * nat_to_neg (Natural.succ d)))) := by simp [mul_inv]
+      _ = (b * nat_to_neg (Natural.succ d)) + (c * nat_to_neg (Natural.succ d)) := by simp [inv_inv]
