@@ -5,6 +5,15 @@ inductive Integer where
   |nat_to_neg : Natural → Integer
   deriving Repr
 
+/- Two Copies of Natural are defined to make up the Integer
+One copy corrresponds to the non-negative Integers
+While the other corresponds to the negative Integers-/
+
+-- ... ,  3,  2,  1,  0,  0,  1,  2,  3, ...  (Two Naturals)
+--        ↓   ↓   ↓   ↓   ↓   ↓   ↓   ↓
+-- ... , -4, -3, -2, -1,  0,  1,  2,  3, ...   (Integers)
+
+
 namespace Integer
 
 def zero := nat_to_pos (Natural.zero)
@@ -45,12 +54,14 @@ theorem pred_to_succ (a b : Integer) (h : a = pred b) : b = succ a := by
     _ = succ (pred b) := by rw [succ_pred]
     _ = succ a        := by rw [h]
 
+/-Proof that the succ function is Injective-/
 theorem succ_inj (a b : Integer) (h : succ a = succ b) : a = b := by
   calc a
   _ = pred (succ a) := by rw [pred_succ]
   _ = pred (succ b) := by rw [h]
   _ = b             := by rw [pred_succ]
 
+/-Proof that the pred function is Injective-/
 theorem pred_inj (a b : Integer) (h : pred a = pred b) : a = b := by
   calc a
     _ = succ (pred a) := by rw [succ_pred]
@@ -58,6 +69,8 @@ theorem pred_inj (a b : Integer) (h : pred a = pred b) : a = b := by
     _ = b             := by rw [succ_pred]
 
 theorem succ_pos_eq_succ (a : Natural) : nat_to_pos (Natural.succ a) = succ (nat_to_pos a) := by rfl
+
+theorem pred_neg_eq_succ (a : Natural) : nat_to_neg (Natural.succ a) = pred (nat_to_neg a) := by rfl
 
 def add : Integer → Integer → Integer
   |nat_to_pos a, nat_to_pos b => nat_to_pos (a + b)
@@ -68,7 +81,6 @@ def add : Integer → Integer → Integer
   |nat_to_neg a, nat_to_pos (Natural.zero) => nat_to_neg a
 
 infixl:65 " + " => add
---notation " 0 " => zero
 
 def one := succ zero
 def two := succ one
@@ -78,11 +90,13 @@ theorem add_zero (a : Integer) : a + zero = a := by
   rfl
   rfl
 
+/-Proof that the succ function is equivalent to adding one -/
 theorem succ_eq_add_one (a : Integer) : succ a = a + one := by
   cases a
   rfl
   rfl
 
+/-Proof that the pred function is equivalent to adding negative one -/
 theorem pred_eq_add_neg_one (a : Integer) : pred a = a + nat_to_neg Natural.zero := by
   cases a
   rfl
@@ -104,6 +118,7 @@ theorem zero_add (a : Integer) : zero + a = a := by
     rewrite [zero, add, ←zero, hd]
     simp [pred]
 
+/-Proof that succ function splits over addition to the right-/
 theorem add_succ (a b : Integer) : a + succ b = succ (a + b) := by
   cases a
   cases b
@@ -156,7 +171,7 @@ theorem add_succ (a b : Integer) : a + succ b = succ (a + b) := by
     _ = succ (pred (nat_to_neg (a + Natural.succ d))) := by rw [succ_pred]
     _ = succ (nat_to_neg a + nat_to_neg (Natural.succ d)) := by simp [add]
 
-
+/-Proof that succ function splits over addition to the left-/
 theorem succ_add (a b : Integer) : succ a + b = succ (a + b) := by
   cases a
   cases b
@@ -210,6 +225,7 @@ theorem succ_add (a b : Integer) : succ a + b = succ (a + b) := by
     _ = succ (pred (nat_to_neg (Natural.succ d + b))) := by simp [Natural.succ_add, succ_pred]
     _ = succ (nat_to_neg (Natural.succ d) + nat_to_neg b) := by simp [add]
 
+/-Proof that addition is Commutative-/
 theorem add_comm (a b : Integer) : a + b = b + a := by
   cases a
   rename_i a
@@ -249,15 +265,18 @@ theorem add_comm (a b : Integer) : a + b = b + a := by
   rename_i b
   simp [add, Natural.add_comm]
 
+/-Proof that pred function splits over addition to the right-/
 theorem add_pred (a b : Integer) : a + pred b = pred (a + b) := by
   let c := pred a
   have h : c = pred a := by rfl
   have hac : a = succ c := by exact pred_to_succ c a h
   rw [hac, succ_add, succ_add, pred_succ, ←add_succ, succ_pred]
 
+/-Proof that pred function splits over addition to the left-/
 theorem pred_add (a b : Integer) : pred a + b = pred (a + b) := by
   rw [add_comm, add_pred, add_comm]
 
+/-Proof that addition is associative-/
 theorem add_assoc (a b c : Integer) : a + b + c = a + (b + c) := by
   cases a
   rename_i a
@@ -289,6 +308,7 @@ def inverse : Integer → Integer
 
 theorem inv_zero : inverse zero = zero := by rfl
 
+/-Lemma to prove that a + inverse a = zero -/
 theorem add_inverse_1 (a : Natural) : nat_to_pos a + inverse (nat_to_pos a) = zero := by
   induction a with
   |zero =>
@@ -301,6 +321,7 @@ theorem add_inverse_1 (a : Natural) : nat_to_pos a + inverse (nat_to_pos a) = ze
       _ = succ (pred (nat_to_pos d + inverse (nat_to_pos d))) := by simp [inverse, add_pred]
       _ = zero := by rw [hd, succ_pred]
 
+/-Lemma to prove that a + inverse a = zero -/
 theorem add_inverse_2 (a : Natural) : nat_to_neg a + inverse (nat_to_neg a) = zero := by
   simp [inverse, add_succ]
   rw [add_comm, ←add_succ]
@@ -308,6 +329,7 @@ theorem add_inverse_2 (a : Natural) : nat_to_neg a + inverse (nat_to_neg a) = ze
   rw [h]
   exact add_inverse_1 a
 
+/-Proof that a + inverse a = zero -/
 theorem add_inv (a : Integer) : a + inverse a = zero := by
   cases a
   rename_i a
@@ -324,11 +346,13 @@ theorem right_add (a b c : Integer) (h : a = b) : a + c = b + c := by
 theorem left_add (a b c : Integer) (h : a = b) : c + a = c + b := by
   rw [h]
 
+/-Proof of right cancelation of addition-/
 theorem right_cancel (a b c : Integer) (h : a + c = b + c) : a = b := by
   have h1 : a + c + (inverse c) = b + c + (inverse c) := by rw [h]
   simp [add_assoc, add_inv, add_zero] at h1
   exact h1
 
+/-Proof of left cancelation of addition-/
 theorem left_cancel (a b c : Integer) (h : c + a = c + b) : a = b := by
   simp [add_comm] at h
   exact (right_cancel a b c h)
@@ -388,8 +412,10 @@ theorem one_mul (a : Integer) : one * a = a := by
 
 def neg_one := inverse one
 
+/-neg_one = inverse one = nat_to_neg Natural.zero-/
 theorem neg_one_eq_neg_zero : neg_one = nat_to_neg Natural.zero := by rfl
 
+/-Proof that inverse function is same as multiplying by neg_one-/
 theorem inv_eq_mul_neg_one (a : Integer) : inverse a = a * neg_one := by
   cases a
   rfl
@@ -398,18 +424,21 @@ theorem inv_eq_mul_neg_one (a : Integer) : inverse a = a * neg_one := by
   simp [succ, inverse, mul]
   rw [←Natural.one, Natural.mul_one]
 
+/-Proof that inverse (inverse a) = a-/
 theorem inv_inv (a : Integer) : inverse (inverse a) = a := by
   have h : inverse (inverse a) + inverse a = a + inverse a := by simp [add_inv, inv_add]
   exact right_cancel (inverse (inverse a)) a (inverse a) h
 
 prefix:75  "-"   => inverse
 
+/-Proof that inverse is a linear function-/
 theorem inv_lin (a b : Integer) : -a + -b = -(a + b) := by
   have h : -a + -b + (a + b) = -(a + b) + (a + b) := by
     simp [inv_add]
     rw [add_comm (-a), add_assoc, ←add_assoc (-a), inv_add, zero_add, inv_add]
   exact right_cancel (-a + -b) (-(a + b)) (a + b) h
 
+/-Describes how multiplaction takes place w.r.t succ-/
 theorem mul_succ (a b : Integer) : a * succ b = (a * b) + a := by
   cases a
   rename_i apos
@@ -468,6 +497,7 @@ theorem mul_succ (a b : Integer) : a * succ b = (a * b) + a := by
     nat_to_neg (Natural.succ d) := by simp [inverse]
       _ = nat_to_pos (d * bN + bN + bN + Natural.succ (Natural.succ d)) := by simp [add_assoc, inv_add, add_zero]
 
+/-Proof that inverse funtion splits over multiplication to the left-/
 theorem inv_mul (a b : Integer) : -a * b = -(a * b) := by
   cases b
   rename_i b
@@ -535,6 +565,7 @@ theorem inv_mul (a b : Integer) : -a * b = -(a * b) := by
       _ = -(nat_to_pos (Natural.succ a * Natural.succ (Natural.succ d))) := by simp [Natural.mul_succ]
       _ = -(nat_to_neg a * nat_to_neg (Natural.succ d)) := by simp [mul]
 
+/-Proof that inverse funtion splits over multiplication to the right-/
 theorem mul_inv (a b : Integer) : a * -b = -(a * b) := by
   cases b
   cases a
@@ -604,10 +635,11 @@ theorem mul_inv (a b : Integer) : a * -b = -(a * b) := by
     _ = nat_to_neg a * nat_to_pos b + nat_to_neg a := by simp [succ]
 
 
-
+/-Proof that the inverse function is injective-/
 theorem inv_inj (a b : Integer) (h : -a = -b) : a = b := by
   rw [←inv_inv a, h, inv_inv]
 
+/-Proof that multiplication distributes over addition from the right-/
 theorem add_mul (a b c : Integer) : (b + c) * a = (b * a) + (c * a) := by
   cases a
   rename_i a
@@ -644,3 +676,79 @@ theorem add_mul (a b c : Integer) : (b + c) * a = (b * a) + (c * a) := by
       _ = (-(b * -nat_to_neg (Natural.succ d))) + (-(c * -nat_to_neg (Natural.succ d))) := by simp [inverse]
       _ = (-(-(b * nat_to_neg (Natural.succ d)))) + (-(-(c * nat_to_neg (Natural.succ d)))) := by simp [mul_inv]
       _ = (b * nat_to_neg (Natural.succ d)) + (c * nat_to_neg (Natural.succ d)) := by simp [inv_inv]
+
+theorem succ_mul (a b : Integer) : succ a * b = a * b + b := by
+  rw [succ_eq_add_one, add_mul, one_mul]
+
+theorem inv_succ (a : Integer) : -(succ a) = pred (-a) := by
+  rw [succ_eq_add_one, ←inv_lin, ←neg_one, pred_eq_add_neg_one, neg_one_eq_neg_zero]
+
+theorem inv_pred (a : Integer) : -(pred a) = succ (-a) := by
+  rw [←inv_inv (succ (-a)), inv_succ, inv_inv]
+
+theorem mul_pred (a b : Integer) : a * pred b = a * b + -a := by
+  rw [←inv_inv (a * pred b), ←mul_inv, inv_pred, mul_succ, ←inv_lin, ←mul_inv, inv_inv]
+
+theorem pred_mul (a b : Integer) : pred a * b = a * b + -b := by
+  rw [pred_eq_add_neg_one, add_mul, ←neg_one_eq_neg_zero, neg_one, inv_mul, one_mul]
+
+/-Proof that multiplication distributes over addition from the left-/
+theorem mul_add (a b c : Integer) : a * (b + c) = a * b + a * c := by
+  cases a
+  rename_i a
+  induction a with
+  |zero =>
+    rw [←zero]
+    simp [zero_mul, add_zero]
+  |succ d hd =>
+    simp [succ_pos_eq_succ, succ_mul, hd]
+    rw [add_assoc, add_comm (nat_to_pos d * c), add_assoc, ←add_assoc (nat_to_pos d * b), add_comm c]
+
+  rename_i a
+  induction a with
+  |zero =>
+    rw [←neg_one_eq_neg_zero, neg_one]
+    simp [inv_mul, inv_lin, one_mul]
+  |succ d hd =>
+    simp [pred_neg_eq_succ, pred_mul, hd]
+    rw [←inv_lin]
+    rw [add_assoc, add_comm (nat_to_neg d * c), add_assoc, ←add_assoc (nat_to_neg d * b), add_comm (-c)]
+
+/-Proof that multiplication is commutative-/
+theorem mul_comm (a b : Integer) : a * b = b * a := by
+  cases a
+  rename_i a
+  induction a with
+  |zero =>
+    rw [←zero ,zero_mul, mul_zero]
+  |succ d hd =>
+    rw [succ_pos_eq_succ, mul_succ, succ_mul, hd]
+
+  rename_i a
+  induction a with
+  |zero =>
+    rw [←neg_one_eq_neg_zero, neg_one, inv_mul, mul_inv, mul_one, one_mul]
+  |succ d hd =>
+    rw [pred_neg_eq_succ, mul_pred, pred_mul, hd]
+
+/-Proof that multiplication is associative-/
+theorem mul_assoc (a b c : Integer) : (a * b) * c = a * (b * c) := by
+  cases a
+  rename_i a
+  induction a with
+  |zero =>
+    rw [←zero]
+    simp [zero_mul]
+  |succ d hd =>
+    rw [succ_pos_eq_succ, succ_mul, succ_mul, add_mul, hd]
+
+  rename_i a
+  induction a with
+  |zero =>
+    rw [←neg_one_eq_neg_zero, neg_one]
+    simp [inv_mul, one_mul]
+  |succ d hd =>
+    rw [pred_neg_eq_succ]
+    simp [pred_mul, add_mul, hd, inv_mul]
+
+/-Type Integer forms a commutative ring with unity :) -/
